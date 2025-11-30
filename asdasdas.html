@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精美信封</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            padding: 20px;
+            background-image: url(./images/5404e8a2786c362b5d59d96f637e47be.jpg);
+            background-position: center center;
+            background-attachment: fixed;
+            background-size: contain;
+        }
+
+        .envelope-container {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 360px;
+            position: relative;
+        }
+
+        .envelope {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            height: 0;
+            padding-bottom: 69.44%;
+            /* 250/360 ≈ 69.44% */
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .envelope:hover {
+            transform: translateY(-10px);
+        }
+
+        .envelope.opened {
+            transform: translateY(-10px);
+        }
+
+        /* 信封装饰线 */
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: 70px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ddd, transparent);
+            z-index: 2;
+        }
+
+        /* 信封翻盖 */
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: linear-gradient(145deg, #e6e6e6, #d9d9d9);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            z-index: 3;
+            transition: transform 0.6s ease;
+            transform-origin: top;
+        }
+
+        .envelope.opened .flap,
+        .envelope.clicked .flap {
+            transform: rotateX(180deg);
+        }
+
+        /* 邮票 */
+        .stamp {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%);
+            border-radius: 50%;
+            z-index: 4;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-weight: bold;
+            font-size: 10px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .stamp::after {
+            content: '邮票';
+        }
+
+        /* 邮戳效果 */
+        .postmark {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            border: 2px dashed #ff6b6b;
+            border-radius: 50%;
+            z-index: 5;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+        }
+
+        /* 内容区域 */
+        .content {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .recipient {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .address {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* 信封底纹 */
+        .envelope::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 70% 70%, rgba(200, 200, 200, 0.5) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: 0;
+        }
+
+        /* 装饰性元素 */
+        .decoration {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            font-size: 12px;
+            color: #ccc;
+            z-index: 2;
+        }
+
+        .click-hint {
+            position: absolute;
+            bottom: -40px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(0, 0, 0, 0.8);
+            font-size: 14px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* 新增的精美内容容器 */
+        .content-container {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+            width: 90%;
+            max-width: 900px;
+            height: 80vh;
+            background: linear-gradient(145deg, #ffffff, #f8f8f8);
+            border-radius: 15px 15px 0 0;
+            background-image: url(./images/3b983d74116ac646ed9c0c840817764a.jpg);
+            background-position: center center;
+            background-size: contain;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            z-index: 20;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-container.visible {
+            transform: translateX(-50%) translateY(0);
+            padding: 75px;
+        }
+
+        .content-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            position: relative;
+            flex-shrink: 0;
+            color: red;
+        }
+
+        .content-header h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .content-header p {
+            font-size: 14px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            font-size: 20px;
+        }
+
+        .content-body {
+            color: rgb(52, 52, 52);
+            line-height: 1.8;
+            font-size: 20px;
+            /* 从16px增大到20px */
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .content-body p {
+            margin-bottom: 20px;
+            text-align: justify;
+            padding: 2px 8px;
+            position: relative;
+            border-radius: 4px;
+        }
+
+
+        .content-footer {
+            text-align: right;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-style: italic;
+            color: #ff0000;
+            font-size: 38px;
+            flex-shrink: 0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 15;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 滚动条样式 */
+        .content-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .content-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .content-container::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* 移动端特殊样式 */
+        @media (max-width: 767px) {
+            body {
+                padding: 15px;
+            }
+
+            .envelope {
+                max-width: 100%;
+                border-radius: 8px;
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            }
+
+            .content-container {
+                width: 95%;
+                height: 85vh;
+                border-radius: 12px 12px 0 0;
+                padding: 20px;
+            }
+
+            .content-header h2 {
+                font-size: 20px;
+            }
+
+            .content-header p {
+                font-size: 12px;
+            }
+
+            .content-body {
+                font-size: 14px;
+            }
+
+            .content-footer {
+                font-size: 14px;
+            }
+
+            .close-btn {
+                width: 25px;
+                height: 25px;
+                font-size: 16px;
+            }
+
+            .click-hint {
+                font-size: 12px;
+                bottom: -30px;
+            }
+
+            @keyframes bounce {
+
+                0%,
+                20%,
+                50%,
+                80%,
+                100% {
+                    transform: translateY(0);
+                }
+
+                40% {
+                    transform: translateY(-8px);
+                }
+
+                60% {
+                    transform: translateY(-4px);
+                }
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 背景音乐 -->
+    <audio id="bgMusic" preload="auto">
+        <source src="./audio/易烊千玺 - 宝贝.flac" type="audio/flac">
+        您的浏览器不支持音频播放。
+    </audio>
+
+    <div class="envelope-container">
+        <div class="envelope" id="envelope">
+            <div class="flap"></div>
+            <div class="stamp"></div>
+            <div class="postmark"></div>
+            <div class="content">
+                <div class="recipient">收件人：张三</div>
+                <div class="address">
+                    北京市朝阳区某某街道<br>
+                    邮编：100000
+                </div>
+            </div>
+            <div class="decoration">EMS</div>
+        </div>
+        <div class="click-hint">点击信封拆开查看</div>
+    </div>
+
+    <!-- 精美内容容器 -->
+    <div class="overlay" id="overlay"></div>
+    <div class="content-container" id="contentContainer">
+        <div class="content-header">
+            <h2>特别的消息</h2>
+            <p>2023年10月15日</p>
+            <div class="close-btn" id="closeBtn">×</div>
+        </div>
+        <div class="content-body">
+            <p>亲爱的张三：</p>
+            <p> 你好！感谢你打开了这份特别的数字信件。这是一个独特的体验，旨在通过现代化的方式传达传统书信的温暖。</p>
+            <p> 在这个数字化高速发展的时代，我们依然珍视人与人之间的情感连接。这封信不仅仅是一个网页效果，更是对传统通信方式的一种致敬。</p>
+            <p> 正如你所见，当你点击信封时，精美的内容面板会从页面底部缓缓升起，就像一份珍贵的礼物被慢慢展开。这种交互方式希望能带给你不一样的惊喜和愉悦。</p>
+            <p> 愿这份小小的心意能够跨越时空，传递到你的心中。无论你身在何处，都希望你能感受到这份温暖和关怀。</p>
+            <p> 让我们一起珍惜每一个美好的瞬间，把握当下的每一份感动。</p>
+        </div>
+        <div class="content-footer">
+            此致<br>
+            敬礼！<br><br>
+            <strong>发件人</strong>
+        </div>
+    </div>
+
+
+    <script>
+        const envelope = document.getElementById('envelope');
+        const contentContainer = document.getElementById('contentContainer');
+        const overlay = document.getElementById('overlay');
+        const closeBtn = document.getElementById('closeBtn');
+        const bgMusic = document.getElementById('bgMusic');
+
+        envelope.addEventListener('click', function () {
+            this.classList.add('opened');
+
+            // 播放音乐
+            bgMusic.play().catch(error => {
+                console.log('音乐播放失败:', error);
+            });
+
+            // 延迟显示内容容器,让信封动画先完成
+            setTimeout(() => {
+                contentContainer.classList.add('visible');
+                overlay.classList.add('visible');
+            }, 600);
+        });
+
+        closeBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            contentContainer.classList.remove('visible');
+            overlay.classList.remove('visible');
+
+            // 暂停音乐
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+
+            // 关闭后重置信封状态
+            setTimeout(() => {
+                envelope.classList.remove('opened');
+            }, 600);
+        });
+
+        overlay.addEventListener('click', function () {
+            contentContainer.classList.remove('visible');
+            overlay.classList.remove('visible');
+
+            // 暂停音乐
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+
+            // 关闭后重置信封状态
+            setTimeout(() => {
+                envelope.classList.remove('opened');
+            }, 600);
+        });
+    </script>
+</body>
+
+</html>
